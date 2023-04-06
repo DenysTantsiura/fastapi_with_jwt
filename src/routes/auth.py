@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from fastapi import APIRouter, HTTPException, Depends, status, Security
 from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
@@ -14,7 +14,9 @@ security = HTTPBearer()
 
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def signup(body: UserModel, db: Session = Depends(get_db)):
+async def signup(body: UserModel, 
+                 db: Session = Depends(get_db)
+                 ) -> Union[dict, HTTPException]:
     """обробляє операцію POST. Вона створює нового користувача, якщо користувача з такою електронною поштою не існує.
      Не може бути в системі два користувача з однаковим email. Якщо користувач з таким email вже існує в базі даних, 
      функція викликає виняток HTTPException з кодом стану 409 Conflict та подробицями detail="Account already exists"."""
@@ -29,7 +31,9 @@ async def signup(body: UserModel, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenModel)
-async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(body: OAuth2PasswordRequestForm = Depends(), 
+                db: Session = Depends(get_db)
+                ) -> Union[dict, HTTPException]:
     """обробляє операцію POST. Вона витягує користувача з бази даних з його email, якщо такого користувача немає, 
     то викликається виняток HTTPException з кодом стану 401 та подробицями detail="Invalid email". 
     Після цього виконується перевірка пароля на збіг, якщо паролі не ідентичні, то викликається виняток HTTPException 
@@ -51,7 +55,9 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
 
 
 @router.get('/refresh_token', response_model=TokenModel)
-async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(security), 
+                        db: Session = Depends(get_db)
+                        ) -> Union[dict, HTTPException]:
     """обробляє операцію GET. Вона декодує токен оновлення refresh_token та витягує відповідного користувача з БД. 
     Потім створює нові токени доступу та оновлення, і також оновлює refresh_token в базі даних для користувача. 
     Якщо токен оновлення недійсний, то викликається виняток HTTPException з кодом стану 401 та подробицями 

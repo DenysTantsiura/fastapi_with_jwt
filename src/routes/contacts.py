@@ -21,7 +21,7 @@ router = APIRouter(prefix='/contacts')  # tags=["contacts"]
 async def get_contacts(db: Session = Depends(get_db), 
                        current_user: User = Depends(auth_service.get_current_user)
                        ) -> Optional[Page[ContactResponse]]:
-    contacts = await repository_contacts.get_contacts(db)  # limit, offset, 
+    contacts = await repository_contacts.get_contacts(current_user, db)  # limit, offset, 
 
     return contacts
 
@@ -31,7 +31,7 @@ async def get_contact(contact_id: int = Path(ge=1),
                       db: Session = Depends(get_db),
                       current_user: User = Depends(auth_service.get_current_user)
                       ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.get_contact(contact_id, db)
+    contact = await repository_contacts.get_contact(contact_id, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -44,7 +44,7 @@ async def create_contact(body: ContactModel,
                          current_user: User = Depends(auth_service.get_current_user)
                          ) -> Optional[Contact]:
 
-    return await repository_contacts.create_contact(body, db)
+    return await repository_contacts.create_contact(body, current_user, db)
 
 
 @router.put("/{contact_id}", response_model=ContactResponse, tags=['contact'])
@@ -53,7 +53,7 @@ async def update_contact(body: ContactModel,
                          db: Session = Depends(get_db),
                          current_user: User = Depends(auth_service.get_current_user)
                          ) -> Union[Contact, HTTPException]:  
-    contact = await repository_contacts.update_contact(contact_id, body, db)
+    contact = await repository_contacts.update_contact(contact_id, body, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
 
@@ -66,7 +66,7 @@ async def remove_contact(contact_id: int = Path(ge=1),
                          db: Session = Depends(get_db),
                          current_user: User = Depends(auth_service.get_current_user)
                          ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.remove_contact(contact_id, db)
+    contact = await repository_contacts.remove_contact(contact_id, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -79,7 +79,7 @@ async def change_name_contact(body: CatToNameModel,
                               db: Session = Depends(get_db),
                               current_user: User = Depends(auth_service.get_current_user)
                               ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.change_name_contact(body, contact_id, db)
+    contact = await repository_contacts.change_name_contact(body, contact_id, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
@@ -91,7 +91,7 @@ async def search_by_name(name: str,
                          db: Session = Depends(get_db),
                          current_user: User = Depends(auth_service.get_current_user)
                          ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.search_by_name(name, db)
+    contact = await repository_contacts.search_by_name(name, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -103,7 +103,7 @@ async def search_by_last_name(last_name: str,
                               db: Session = Depends(get_db),
                               current_user: User = Depends(auth_service.get_current_user)
                               ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.search_by_last_name(last_name, db)
+    contact = await repository_contacts.search_by_last_name(last_name, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -115,7 +115,7 @@ async def search_by_email(email: str,
                           db: Session = Depends(get_db),
                           current_user: User = Depends(auth_service.get_current_user)
                           ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.search_by_email(email, db)
+    contact = await repository_contacts.search_by_email(email, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -127,7 +127,7 @@ async def search_by_phone(phone: int,
                           db: Session = Depends(get_db),
                           current_user: User = Depends(auth_service.get_current_user)
                           ) -> Union[Contact, HTTPException]:
-    contact = await repository_contacts.search_by_phone(phone, db)
+    contact = await repository_contacts.search_by_phone(phone, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -139,7 +139,7 @@ async def search_by_birthday_celebration_within_days(days: int,
                                                      db: Session = Depends(get_db),
                                                      current_user: User = Depends(auth_service.get_current_user)
                                                      ) -> Union[Page[ContactResponse], HTTPException]:
-    contact = await repository_contacts.search_by_birthday_celebration_within_days(days, db)
+    contact = await repository_contacts.search_by_birthday_celebration_within_days(days, current_user, db)
     if contact is None:  # NoConnection in database...
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -151,7 +151,7 @@ async def search_by_like_name(name: str,
                               db: Session = Depends(get_db),
                               current_user: User = Depends(auth_service.get_current_user)
                               ) -> Union[Page[ContactResponse], HTTPException]:
-    contact = await repository_contacts.search_by_like_name(name, db)
+    contact = await repository_contacts.search_by_like_name(name, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -163,7 +163,7 @@ async def search_by_like_last_name(last_name: str,
                                    db: Session = Depends(get_db),
                                    current_user: User = Depends(auth_service.get_current_user)
                                    ) -> Union[Page[ContactResponse], HTTPException]:
-    contact = await repository_contacts.search_by_like_last_name(last_name, db)
+    contact = await repository_contacts.search_by_like_last_name(last_name, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -175,7 +175,7 @@ async def search_by_like_email(email: str,
                                db: Session = Depends(get_db),
                                current_user: User = Depends(auth_service.get_current_user)
                                ) -> Union[Page[ContactResponse], HTTPException]:
-    contact = await repository_contacts.search_by_like_email(email, db)
+    contact = await repository_contacts.search_by_like_email(email, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
@@ -187,7 +187,7 @@ async def search_by_like_phone(phone: int,
                                db: Session = Depends(get_db),
                                current_user: User = Depends(auth_service.get_current_user)
                                ) -> Union[Page[ContactResponse], HTTPException]:
-    contact = await repository_contacts.search_by_like_phone(phone, db)
+    contact = await repository_contacts.search_by_like_phone(phone, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     

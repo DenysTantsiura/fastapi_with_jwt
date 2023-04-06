@@ -25,7 +25,7 @@ class CatToNameModel(BaseModel):
 
 class UserModel(BaseModel):
     """корисні дані запиту для створення нового користувача."""
-    username: str = Field(min_length=2, max_length=16)
+    username: str = Field(min_length=2, max_length=30)
     email: str
     password: str = Field(min_length=6, max_length=10)
 
