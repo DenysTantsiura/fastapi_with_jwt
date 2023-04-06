@@ -3,7 +3,6 @@ from typing import List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from fastapi_pagination import Page, add_pagination  # , paginate  # poetry add fastapi-pagination
-# from fastapi_pagination.ext.async_sqlmodel import paginate
 from sqlalchemy.orm import Session
 
 from src.database.db_connect import get_db
@@ -16,12 +15,11 @@ from src.services.auth import auth_service
 router = APIRouter(prefix='/contacts')  # tags=["contacts"]
 
 
-# response_model=List[ContactResponse]   # limit: int = Query(10, le=500), offset: int = 0,
 @router.get("/", response_model=Page[ContactResponse], tags=['all_contacts'])
 async def get_contacts(db: Session = Depends(get_db), 
                        current_user: User = Depends(auth_service.get_current_user)
                        ) -> Optional[Page[ContactResponse]]:
-    contacts = await repository_contacts.get_contacts(current_user, db)  # limit, offset, 
+    contacts = await repository_contacts.get_contacts(current_user, db) 
 
     return contacts
 
@@ -49,7 +47,7 @@ async def create_contact(body: ContactModel,
 
 @router.put("/{contact_id}", response_model=ContactResponse, tags=['contact'])
 async def update_contact(body: ContactModel,
-                         contact_id: int = Path(ge=1),  # =Path(ge=1) ?
+                         contact_id: int = Path(ge=1), 
                          db: Session = Depends(get_db),
                          current_user: User = Depends(auth_service.get_current_user)
                          ) -> Union[Contact, HTTPException]:  
@@ -60,7 +58,6 @@ async def update_contact(body: ContactModel,
     return contact
 
 
-# response_model=ContactResponse or status_code=status.HTTP_204_NO_CONTENT ? ...
 @router.delete("/{contact_id}", response_model=ContactResponse, tags=['contact'])
 async def remove_contact(contact_id: int = Path(ge=1),
                          db: Session = Depends(get_db),
@@ -140,10 +137,10 @@ async def search_by_birthday_celebration_within_days(days: int,
                                                      current_user: User = Depends(auth_service.get_current_user)
                                                      ) -> Union[Page[ContactResponse], HTTPException]:
     contact = await repository_contacts.search_by_birthday_celebration_within_days(days, current_user, db)
-    if contact is None:  # NoConnection in database...
+    if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
-    return contact  # paginate(contact)
+    return contact
 
 
 @router.get("/search_by_like_name/{name}", response_model=Page[ContactResponse], tags=['search'])

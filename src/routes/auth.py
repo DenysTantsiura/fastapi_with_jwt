@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 from fastapi import APIRouter, HTTPException, Depends, status, Security
 from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
@@ -19,7 +19,8 @@ async def signup(body: UserModel,
                  ) -> Union[dict, HTTPException]:
     """обробляє операцію POST. Вона створює нового користувача, якщо користувача з такою електронною поштою не існує.
      Не може бути в системі два користувача з однаковим email. Якщо користувач з таким email вже існує в базі даних, 
-     функція викликає виняток HTTPException з кодом стану 409 Conflict та подробицями detail="Account already exists"."""
+     функція викликає виняток HTTPException з кодом стану 409 Conflict та подробицями detail="Account already exists".
+     """
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")

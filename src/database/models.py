@@ -17,7 +17,8 @@ class Contact(Base):
     description = Column(String(3000))
     user_id = Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), default=None)
     user = relationship('User', backref="users")  # створює зв'язок між класами і вказує, що зв'язок є зв'язком m2m
-    # backref створює зворотне посилання на клас User, дозволяючи отримати доступ до зв'язаних об'єктів Contact з об'єкта User
+    # backref створює зворотне посилання на клас User,
+    # дозволяючи отримати доступ до зв'язаних об'єктів Contact з об'єкта User
 
 
 class User(Base):
@@ -25,7 +26,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(50))
     email = Column(String(30), nullable=False, unique=True)
-    password = Column(String(255), nullable=False)  # not 10, be cause store hash, not password
+    password = Column(String(255), nullable=False)  # not 10, because store hash, not password
     created_at = Column('crated_at', DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)

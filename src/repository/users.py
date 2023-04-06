@@ -1,13 +1,4 @@
-# Для роботи з моделлю користувача User в SQLAlchemy ми визначили кілька функцій, які нам знадобляться надалі
 from libgravatar import Gravatar  # poetry add libgravatar
-# https://pypi.org/project/libgravatar/
-# https://en.gravatar.com/
-"""Gravatar (Globally Recognized Avatar) - це зручний та безкоштовний сервіс, 
-що дозволяє створити аватар (електронний аватар), який може бути використаний 
-на багатьох сайтах в інтернеті. Ви можете завантажити фото або зображення, яке 
-буде прив'язане до вашої адреси електронної пошти. Потім, коли ви надсилаєте 
-коментар або робите іншу діяльність, яка вимагає відображення вашого аватара, 
-цей аватар відображатиметься на цьому сайті."""
 from sqlalchemy.orm import Session
 
 from src.database.models import User

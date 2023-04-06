@@ -23,13 +23,12 @@ config = configparser.ConfigParser()
 config.read(file_config)
 
 user = config.get('DB_DEV', 'user')
-# password = config.get('DB_DEV', 'password')
 password = get_password()
 database = config.get('DB_DEV', 'db_name')
 host = config.get('DB_DEV', 'host')
 # port = config.get('DB_DEV', 'port')
 
-SQLALCHEMY_DATABASE_URL = url_to_db = f'postgresql+psycopg2://{user}:{password}@{host}/{database}'  # if or try?
+SQLALCHEMY_DATABASE_URL = url_to_db = f'postgresql+psycopg2://{user}:{password}@{host}/{database}'  # if or try
 
 
 def create_connection(*args, **kwargs) -> tuple[Optional[Engine], Optional[sessionmaker]]:

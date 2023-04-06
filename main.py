@@ -1,5 +1,4 @@
-# router = APIRouter(prefix='/auth', tags=["auth"])
-# FastAPI + REST API example (Contacts)
+# FastAPI + REST API example (Contacts) + Authorization
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -9,7 +8,7 @@ from src.database.db_connect import get_db
 from src.routes import auth, contacts
 
 
-app = FastAPI()  # our application
+app = FastAPI()
 
 app.include_router(auth.router, prefix='/api')
 app.include_router(contacts.router, prefix='/api')
