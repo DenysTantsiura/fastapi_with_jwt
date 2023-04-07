@@ -1,5 +1,5 @@
 # Роутер(маршрут) для модуля contacts - містить точки доступу для операцій CRUD
-from typing import List, Optional, Union
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from fastapi_pagination import Page, add_pagination  # , paginate  # poetry add fastapi-pagination

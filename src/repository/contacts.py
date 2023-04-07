@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import cast, func, String
+from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
 from src.database.models import Contact, User
@@ -79,20 +79,6 @@ async def update_contact(
     return contact
 
 
-'''
- obj_data = jsonable_encoder(db_obj)
-        if isinstance(obj_in, dict):
-            update_data = obj_in
-        else:
-            update_data = obj_in.dict(exclude_unset=True)
-        for field in obj_data:
-            if field in update_data:
-                setattr(db_obj, field, update_data[field])
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-'''
-
 async def remove_contact(
                          contact_id: int,
                          user: User,
@@ -158,15 +144,22 @@ async def search_by_phone(
     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(phone=phone).first()
 
 
+# ----------------------------------------------
+# https://stackoverflow.com/questions/7942547/using-or-in-sqlalchemy
 async def search_by_like(
                          query_str: str,
                          user: User,
                          db: Session
                          ) -> Page[ContactResponse]:
-    """To search for an entry by a partial match in the <query> (name, last_name, query)."""
+    """To search for an entry by a partial match in the whole fields: name, last_name, query."""
     return paginate(db.query(Contact)
                     .filter(Contact.user_id == user.id)
-                    .filter(Contact.name.icontains(query_str)))  # .name !
+                    .filter(or_(
+                                Contact.name.icontains(query_str), 
+                                Contact.last_name.icontains(query_str),
+                                Contact.email.icontains(query_str)
+                                )))
+# ----------------------------------------------
 
 
 async def search_by_like_name(
