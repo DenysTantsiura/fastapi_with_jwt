@@ -26,15 +26,17 @@ user = config.get('DB_DEV', 'user')
 password = get_password()
 database = config.get('DB_DEV', 'db_name')
 host = config.get('DB_DEV', 'host')
-# port = config.get('DB_DEV', 'port')
+port = config.get('DB_DEV', 'port')
 
-SQLALCHEMY_DATABASE_URL = url_to_db = f'postgresql+psycopg2://{user}:{password}@{host}/{database}'  # if or try
+SQLALCHEMY_DATABASE_URL = f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}'
+if port == '0':
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(':0/', '/')
 
 
 def create_connection(*args, **kwargs) -> tuple[Optional[Engine], Optional[sessionmaker]]:
     """Create a database connection (session) to a PostgreSQL database (engine)."""
     try:
-        engine_ = create_engine(url_to_db, echo=True, pool_size=10)
+        engine_ = create_engine(SQLALCHEMY_DATABASE_URL, echo=True, pool_size=10)
         db_session = sessionmaker(autocommit=False, autoflush=False, bind=engine_)
     
     except Exception as error:

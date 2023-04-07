@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import cast, func, String
@@ -12,23 +13,29 @@ from src.database.models import Contact, User
 from src.schemes import ContactModel, CatToNameModel, ContactResponse
 
 
-async def get_contacts(user: User, 
-                       db: Session) -> Optional[Page[ContactResponse]]:
+async def get_contacts(
+                       user: User, 
+                       db: Session
+                       ) -> Page[ContactResponse]:
     """To retrieve a list of records from a database with the ability to skip 
     a certain number of records and limit the number returned."""
     return paginate(db.query(Contact).filter(Contact.user_id == user.id).order_by(Contact.name))
 
 
-async def get_contact(contact_id: int, 
+async def get_contact(
+                      contact_id: int, 
                       user: User,
-                      db: Session) -> Optional[Contact]:
+                      db: Session
+                      ) -> Optional[Contact]:
     """To get a particular record by its ID."""
     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(id=contact_id).first()  
 
 
-async def create_contact(body: ContactModel, 
+async def create_contact(
+                         body: ContactModel, 
                          user: User,
-                         db: Session) -> Optional[Contact]:
+                         db: Session
+                         ) -> Contact:
     """Creating a new record in the database. Takes a ContactModel object and uses the information 
     from it to create a new Contact object, then adds it to the session and 
     commits the changes to the database."""
@@ -43,112 +50,174 @@ async def create_contact(body: ContactModel,
     db.add(contact)
     db.commit()
     db.refresh(contact)
+
     return contact
 
 
-async def update_contact(contact_id: int,
+async def update_contact(
+                         contact_id: int,
                          body: ContactModel,
                          user: User,
-                         db: Session) -> Optional[Contact]:
+                         db: Session
+                         ) -> Contact:
     """Update a specific record by its ID. Takes the ContactModel object and updates the information from it 
     by the name of the record. If the record does not exist - None is returned."""
-    contact = db.query(Contact).filter(Contact.user_id == user.id).filter_by(id=contact_id).first()
-    if contact:
-        contact.name = body.name
-        contact.last_name = body.last_name
-        contact.email = body.email
-        contact.phone = body.phone
-        contact.description = body.description
-        db.commit()
+    contact: Contact = db.query(Contact).filter(Contact.user_id == user.id).filter_by(id=contact_id).first()
+    # contact: Contact = db.query(Contact).filter(Contact.user_id == user.id).filter(Contact.id == contact_id).first()
+    
+    db_obj_data = jsonable_encoder(contact)
+    body_data = jsonable_encoder(body)
+    
+    for field in db_obj_data:
+        if field in body_data:
+            setattr(contact, field, body_data[field])
+            
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+
     return contact
 
 
-async def remove_contact(contact_id: int,
+'''
+ obj_data = jsonable_encoder(db_obj)
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.dict(exclude_unset=True)
+        for field in obj_data:
+            if field in update_data:
+                setattr(db_obj, field, update_data[field])
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+'''
+
+async def remove_contact(
+                         contact_id: int,
                          user: User,
-                         db: Session) -> Optional[Contact]:
+                         db: Session
+                         ) -> Optional[Contact]:
     """Delete a specific record by its ID. If the record does not exist - None is returned."""
     contact = db.query(Contact).filter(Contact.user_id == user.id).filter_by(id=contact_id).first()
     if contact:
         db.delete(contact)
         db.commit()
+
     return contact
 
 
-async def change_name_contact(body: CatToNameModel,
+async def change_name_contact(
+                              body: CatToNameModel,
                               contact_id: int,
                               user: User,
-                              db: Session) -> Optional[Contact]:
+                              db: Session
+                              ) -> Optional[Contact]:
     """To update only the name of the record."""
     contact = db.query(Contact).filter(Contact.user_id == user.id).filter_by(id=contact_id).first()
     if contact:
         contact.name = body.name
         db.commit()
+
     return contact
 
 
-async def search_by_name(name: str,
+async def search_by_name(
+                         name: str,
                          user: User,
-                         db: Session) -> Optional[Contact]:
+                         db: Session
+                         ) -> Optional[Contact]:
     """To search for a record by a specific name."""
     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
 
 
-async def search_by_last_name(last_name: str,
+async def search_by_last_name(
+                              last_name: str,
                               user: User,
-                              db: Session) -> Optional[Contact]:
+                              db: Session
+                              ) -> Optional[Contact]:
     """To search for a record by a specific last name."""
     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(last_name=last_name).first() 
 
 
-async def search_by_email(email: str,
+async def search_by_email(
+                          email: str,
                           user: User,
-                          db: Session) -> Optional[Contact]:
+                          db: Session
+                          ) -> Optional[Contact]:
     """To search for a record by a certain email."""
     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(email=email).first()
 
 
-async def search_by_phone(phone: int,
+async def search_by_phone(
+                          phone: int,
                           user: User,
-                          db: Session) -> Optional[Contact]:
+                          db: Session
+                          ) -> Optional[Contact]:
     """To search for a record by a certain phone."""
     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(phone=phone).first()
 
 
-async def search_by_like_name(part_name: str,
+async def search_by_like(
+                         query_str: str,
+                         user: User,
+                         db: Session
+                         ) -> Page[ContactResponse]:
+    """To search for an entry by a partial match in the <query> (name, last_name, query)."""
+    return paginate(db.query(Contact)
+                    .filter(Contact.user_id == user.id)
+                    .filter(Contact.name.icontains(query_str)))  # .name !
+
+
+async def search_by_like_name(
+                              part_name: str,
                               user: User,
-                              db: Session) -> Optional[Page[ContactResponse]]:
+                              db: Session
+                              ) -> Page[ContactResponse]:
     """To search for an entry by a partial match in the name."""
-    return paginate(db.query(Contact).filter(Contact.user_id == user.id).filter(Contact.name.icontains(part_name)))
+    return paginate(db.query(Contact)
+                    .filter(Contact.user_id == user.id)
+                    .filter(Contact.name.icontains(part_name)))
 
 
-async def search_by_like_last_name(part_last_name: str,
+async def search_by_like_last_name(
+                                   part_last_name: str,
                                    user: User,
-                                   db: Session) -> Optional[Page[ContactResponse]]:
+                                   db: Session
+                                   ) -> Page[ContactResponse]:
     """To search for a record by a partial match in the last name."""
     return paginate(db.query(Contact)
                     .filter(Contact.user_id == user.id)
                     .filter(Contact.last_name.icontains(part_last_name)))
 
 
-async def search_by_like_email(part_email: str,
+async def search_by_like_email(
+                               part_email: str,
                                user: User,
-                               db: Session) -> Optional[Page[ContactResponse]]:
+                               db: Session
+                               ) -> Page[ContactResponse]:
     """To search for a record by a partial match in an email."""
-    return paginate(db.query(Contact).filter(Contact.user_id == user.id).filter(Contact.email.icontains(part_email)))
+    return paginate(db.query(Contact)
+                    .filter(Contact.user_id == user.id)
+                    .filter(Contact.email.icontains(part_email)))
 
 
-async def search_by_like_phone(part_phone: int,
+async def search_by_like_phone(
+                               part_phone: int,
                                user: User,
-                               db: Session) -> Optional[Page[ContactResponse]]:
+                               db: Session
+                               ) -> Page[ContactResponse]:
     """To search for a record by a partial match in phone."""
     return paginate(db.query(Contact).filter(Contact.user_id == user.id)
                     .filter(cast(Contact.phone, String)
                             .icontains(str(part_phone))))
 
 
-async def search_by_birthday_celebration_within_days(meantime: int,   
+async def search_by_birthday_celebration_within_days(
+                                                     meantime: int,   
                                                      user: User,
-                                                     db: Session) -> Optional[Page[ContactResponse]]: 
+                                                     db: Session
+                                                     ) -> Page[ContactResponse]: 
     """To find contacts celebrating birthdays in the next (meantime) days."""
     today = date.today()
     days_limit = date.today() + timedelta(meantime)
