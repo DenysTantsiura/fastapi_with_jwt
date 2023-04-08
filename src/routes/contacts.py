@@ -89,25 +89,7 @@ async def change_name_contact(
     return contact
 
 
-# https://fastapi.tiangolo.com/tutorial/query-params/#__tabbed_2_1
-@router.get("/search_by_item/", response_model=ContactResponse, tags=['search'])
-async def search_by_item(
-                        #  body: ContactQuery,
-                         name: str | None = None,
-                         last_name: str | None = None,
-                         email: str | None = None,
-                         phone: int | None = None,
-                         db: Session = Depends(get_db),
-                         current_user: User = Depends(auth_service.get_current_user)
-                         ) -> Optional[Contact]:
-    contact = await repository_contacts.search_by_item(name, last_name, email, phone, current_user, db=db)
-    # contact = await repository_contacts.search_by_item(body, current_user, db=db)
-    if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
-    
-    return contact
-
-
+# ---SEARCH---------------------------------------------------
 @router.get("/search_by_birthday_celebration_within_days/{days}", response_model=Page[ContactResponse], tags=['search'])
 async def search_by_birthday_celebration_within_days(
                                                      days: int,
@@ -121,67 +103,61 @@ async def search_by_birthday_celebration_within_days(
     return contact
 
 
-# ----------------------------------------------
-@router.get("/search_by_like/{query_str}", response_model=Page[ContactResponse], tags=['search'])
-async def search_by_like(
+# https://fastapi.tiangolo.com/tutorial/query-params/#__tabbed_2_1
+@router.get("/search_by_fields_and/", response_model=ContactResponse, tags=['search'])
+async def search_by_fields_and(
+                               #  body: ContactQuery,
+                               name: str | None = None,
+                               last_name: str | None = None,
+                               email: str | None = None,
+                               phone: int | None = None,
+                               db: Session = Depends(get_db),
+                               current_user: User = Depends(auth_service.get_current_user)
+                               ) -> Optional[Contact]:
+    contact = await repository_contacts.search_by_fields_and(name, last_name, email, phone, current_user, db=db)
+    # contact = await repository_contacts.search_by_fields_and(body, current_user, db=db)
+    if contact is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
+    
+    return contact
+
+
+@router.get("/search_by_fields_or/{query_str}", response_model=Page[ContactResponse], tags=['search'])
+async def search_by_fields_or(
                          query_str: str,
                          db: Session = Depends(get_db),
                          current_user: User = Depends(auth_service.get_current_user)
                          ) -> Page[ContactResponse]:
-    contact = await repository_contacts.search_by_like(query_str, current_user, db)
-    if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
-    
-    return contact
-# ----------------------------------------------
-
-
-@router.get("/search_by_like_name/{name}", response_model=Page[ContactResponse], tags=['search'])
-async def search_by_like_name(
-                              name: str,
-                              db: Session = Depends(get_db),
-                              current_user: User = Depends(auth_service.get_current_user)
-                              ) -> Page[ContactResponse]:
-    contact = await repository_contacts.search_by_like_name(name, current_user, db)
+    contact = await repository_contacts.search_by_fields_or(query_str, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
     return contact
 
 
-@router.get("/search_by_like_last_name/{last_name}", response_model=Page[ContactResponse], tags=['search'])
-async def search_by_like_last_name(
-                                   last_name: str,
-                                   db: Session = Depends(get_db),
-                                   current_user: User = Depends(auth_service.get_current_user)
-                                   ) -> Page[ContactResponse]:
-    contact = await repository_contacts.search_by_like_last_name(last_name, current_user, db)
+@router.get("/search_by_like_fields_or/{query_str}", response_model=Page[ContactResponse], tags=['search'])
+async def search_by_like_fields_or(
+                         query_str: str,
+                         db: Session = Depends(get_db),
+                         current_user: User = Depends(auth_service.get_current_user)
+                         ) -> Page[ContactResponse]:
+    contact = await repository_contacts.search_by_like_fields_or(query_str, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     
     return contact
 
 
-@router.get("/search_by_like_email/{email}", response_model=Page[ContactResponse], tags=['search'])
-async def search_by_like_email(
-                               email: str,
-                               db: Session = Depends(get_db),
-                               current_user: User = Depends(auth_service.get_current_user)
-                               ) -> Page[ContactResponse]:
-    contact = await repository_contacts.search_by_like_email(email, current_user, db)
-    if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
-    
-    return contact
-
-
-@router.get("/search_by_like_phone/{phone}", response_model=Page[ContactResponse], tags=['search'])
-async def search_by_like_phone(
-                               phone: int,
-                               db: Session = Depends(get_db),
-                               current_user: User = Depends(auth_service.get_current_user)
-                               ) -> Page[ContactResponse]:
-    contact = await repository_contacts.search_by_like_phone(phone, current_user, db)
+@router.get("/search_by_like_fields_and/", response_model=Page[ContactResponse], tags=['search'])
+async def search_by_like_fields_and(
+                                    name: str | None = None,
+                                    last_name: str | None = None,
+                                    email: str | None = None,
+                                    phone: int | None = None,
+                                    db: Session = Depends(get_db),
+                                    current_user: User = Depends(auth_service.get_current_user)
+                                    ) -> Page[ContactResponse]:
+    contact = await repository_contacts.search_by_like_fields_and(name, last_name, email, phone, current_user, db=db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
     

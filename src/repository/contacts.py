@@ -108,17 +108,17 @@ async def change_name_contact(
     return contact
 
 
-# --AND----- (add OR ? )-------------------------------------
-async def search_by_item(
-                        #  body: ContactQuery,
-                         name: str | None,
-                         last_name: str | None,
-                         email: str | None,
-                         phone: int | None,
-                         user: User,
-                         db: Session
-                         ) -> Optional[Contact]:
-    """To search for a record by a specific name."""
+# -=- AND--------------------------------------------------------------
+async def search_by_fields_and(
+                              #  body: ContactQuery,
+                              name: str | None,
+                              last_name: str | None,
+                              email: str | None,
+                              phone: int | None,
+                              user: User,
+                              db: Session
+                              ) -> Optional[Contact]:
+    """To search for a record by a specific value for field(-s)."""
     # body_data = jsonable_encoder(body)
     # if not any(body_data.values()):
 
@@ -146,84 +146,70 @@ async def search_by_item(
     return result.first()  # db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
 
 
-# ----------------------------------------------
+# -=- OR ----------------------------------------------------------------
+async def search_by_fields_or(
+                              query_str: str,
+                              user: User,
+                              db: Session
+                              ) -> Page[ContactResponse]:
+    """To search for an entry by match in all fields: name, last_name, query, phone."""
+    return paginate(db.query(Contact)
+                    .filter(Contact.user_id == user.id)
+                    .filter(or_(
+                                Contact.name == query_str, 
+                                Contact.last_name == query_str,
+                                Contact.email == query_str,
+                                cast(Contact.phone, String)  == query_str   # !?,
+                                )))
 
 
 # https://stackoverflow.com/questions/7942547/using-or-in-sqlalchemy
-async def search_by_like(
-                         query_str: str,
-                         user: User,
-                         db: Session
-                         ) -> Page[ContactResponse]:
-    """To search for an entry by a partial match in the whole fields: name, last_name, query."""
-    return paginate(db.query(Contact)
+# -like- OR------------------------------------------------------------
+async def search_by_like_fields_or(
+                                   query_str: str,
+                                   user: User,
+                                   db: Session
+                                   ) -> Page[ContactResponse]:
+    """To search for an entry by a partial match in all fields: name, last_name, query, phone."""
+    return paginate(
+                    db.query(Contact)
                     .filter(Contact.user_id == user.id)
                     .filter(or_(
                                 Contact.name.icontains(query_str), 
                                 Contact.last_name.icontains(query_str),
-                                Contact.email.icontains(query_str)
+                                Contact.email.icontains(query_str),
+                                cast(Contact.phone, String).icontains(str(query_str))
                                 )))
-# ----------------------------------------------
 
 
-async def search_by_like_item(
-                              part_name: str,
-                              part_last_name: str,
-                              part_email: str,
-                              part_phone: int,
-                              user: User,
-                              db: Session
-                              ) -> Page[ContactResponse]:
-    """To search for an entry by a partial match in the name."""
-    return paginate(db.query(Contact)
-                    .filter(Contact.user_id == user.id)
-                    .filter(Contact.name.icontains(part_name)))
+# -like- AND-------------------------------------------------------
+async def search_by_like_fields_and(
+                                    part_name: str | None,
+                                    part_last_name: str | None,
+                                    part_email: str | None,
+                                    part_phone: int | None,
+                                    user: User,
+                                    db: Session
+                                    ) -> Page[ContactResponse]:
+    """To search for an entry by a partial match in all fields: name, last_name, query, phone."""
+    if not part_name and not part_last_name and not part_email and not part_phone:
 
-# ------------=---------------=---------------
-async def search_by_like_name(
-                              part_name: str,
-                              user: User,
-                              db: Session
-                              ) -> Page[ContactResponse]:
-    """To search for an entry by a partial match in the name."""
-    return paginate(db.query(Contact)
-                    .filter(Contact.user_id == user.id)
-                    .filter(Contact.name.icontains(part_name)))
+        return None
 
-
-async def search_by_like_last_name(
-                                   part_last_name: str,
-                                   user: User,
-                                   db: Session
-                                   ) -> Page[ContactResponse]:
-    """To search for a record by a partial match in the last name."""
-    return paginate(db.query(Contact)
-                    .filter(Contact.user_id == user.id)
-                    .filter(Contact.last_name.icontains(part_last_name)))
+    result = db.query(Contact).filter(Contact.user_id == user.id)
+    if part_name:
+        result = result.filter(Contact.name.icontains(part_name))
+    if part_last_name:
+        result = result.filter(Contact.last_name.icontains(part_last_name))
+    if part_email:
+        result = result.filter(Contact.email.icontains(part_email))
+    if part_phone:
+        result = result.filter(cast(Contact.phone, String).icontains(str(part_phone)))
+    
+    return paginate(result)
 
 
-async def search_by_like_email(
-                               part_email: str,
-                               user: User,
-                               db: Session
-                               ) -> Page[ContactResponse]:
-    """To search for a record by a partial match in an email."""
-    return paginate(db.query(Contact)
-                    .filter(Contact.user_id == user.id)
-                    .filter(Contact.email.icontains(part_email)))
-
-
-async def search_by_like_phone(
-                               part_phone: int,
-                               user: User,
-                               db: Session
-                               ) -> Page[ContactResponse]:
-    """To search for a record by a partial match in phone."""
-    return paginate(db.query(Contact).filter(Contact.user_id == user.id)
-                    .filter(cast(Contact.phone, String)
-                            .icontains(str(part_phone))))
-
-
+# ------- search_by_birthday... --------------------------------------------
 async def search_by_birthday_celebration_within_days(
                                                      meantime: int,   
                                                      user: User,
