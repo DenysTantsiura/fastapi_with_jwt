@@ -19,7 +19,11 @@ async def get_contacts(
                        ) -> Page[ContactResponse]:
     """To retrieve a list of records from a database with the ability to skip 
     a certain number of records and limit the number returned."""
-    return paginate(db.query(Contact).filter(Contact.user_id == user.id).order_by(Contact.name))
+    return paginate(
+                    db.query(Contact)
+                    .filter(Contact.user_id == user.id)
+                    .order_by(Contact.name)
+                    )
 
 
 async def get_contact(
@@ -28,7 +32,12 @@ async def get_contact(
                       db: Session
                       ) -> Optional[Contact]:
     """To get a particular record by its ID."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(id=contact_id).first()  
+    return (
+            db.query(Contact)
+            .filter(Contact.user_id == user.id)
+            .filter_by(id=contact_id)
+            .first()
+            )
 
 
 async def create_contact(
@@ -108,104 +117,113 @@ async def change_name_contact(
     return contact
 
 
-async def search_by_name(
-                         name: str,
-                         user: User,
-                         db: Session
-                         ) -> Optional[Contact]:
-    """To search for a record by a specific name."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
+# -=- AND--------------------------------------------------------------
+async def search_by_fields_and(
+                            #    body: ContactQuery,
+                               name: str | None,
+                               last_name: str | None,
+                               email: str | None,
+                               phone: int | None,
+                               user: User,
+                               db: Session
+                               ) -> Optional[Contact]:
+    """To search for a record by a specific value for field(-s)."""
+    # body_data = jsonable_encoder(body)
+    # if not any(body_data.values()):
+
+    #     return None
+    
+    # result = db.query(Contact).filter(Contact.user_id == user.id)
+    # for field in body_data:
+    #     if body[field]:
+    #         result = result.filter_by(field=body[field])
+
+    if not name and not last_name and not email and not phone:
+        return None
+
+    result = db.query(Contact).filter(Contact.user_id == user.id)
+    if name:
+        result = result.filter_by(name=name)
+    if last_name:
+        result = result.filter_by(last_name=last_name)
+    if email:
+        result = result.filter_by(email=email)
+    if phone:
+        result = result.filter_by(phone=phone)
+
+    return result.first()  # db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
 
 
-async def search_by_last_name(
-                              last_name: str,
-                              user: User,
-                              db: Session
-                              ) -> Optional[Contact]:
-    """To search for a record by a specific last name."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(last_name=last_name).first() 
-
-
-async def search_by_email(
-                          email: str,
-                          user: User,
-                          db: Session
-                          ) -> Optional[Contact]:
-    """To search for a record by a certain email."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(email=email).first()
-
-
-async def search_by_phone(
-                          phone: int,
-                          user: User,
-                          db: Session
-                          ) -> Optional[Contact]:
-    """To search for a record by a certain phone."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(phone=phone).first()
-
-
-# ----------------------------------------------
-# https://stackoverflow.com/questions/7942547/using-or-in-sqlalchemy
-async def search_by_like(
-                         query_str: str,
-                         user: User,
-                         db: Session
-                         ) -> Page[ContactResponse]:
-    """To search for an entry by a partial match in the whole fields: name, last_name, query."""
-    return paginate(db.query(Contact)
-                    .filter(Contact.user_id == user.id)
-                    .filter(or_(
-                                Contact.name.icontains(query_str), 
-                                Contact.last_name.icontains(query_str),
-                                Contact.email.icontains(query_str)
-                                )))
-# ----------------------------------------------
-
-
-async def search_by_like_name(
-                              part_name: str,
+# -=- OR ----------------------------------------------------------------
+async def search_by_fields_or(
+                              query_str: str,
                               user: User,
                               db: Session
                               ) -> Page[ContactResponse]:
-    """To search for an entry by a partial match in the name."""
-    return paginate(db.query(Contact)
+    """To search for an entry by match in all fields: name, last_name, query, phone."""
+    return paginate(
+                    db.query(Contact)
                     .filter(Contact.user_id == user.id)
-                    .filter(Contact.name.icontains(part_name)))
+                    .filter(
+                            or_(
+                                Contact.name == query_str, 
+                                Contact.last_name == query_str,
+                                Contact.email == query_str,
+                                cast(Contact.phone, String) == query_str   # !?,
+                                )
+                            )
+                    )
 
 
-async def search_by_like_last_name(
-                                   part_last_name: str,
+# https://stackoverflow.com/questions/7942547/using-or-in-sqlalchemy
+# -like- OR------------------------------------------------------------
+async def search_by_like_fields_or(
+                                   query_str: str,
                                    user: User,
                                    db: Session
                                    ) -> Page[ContactResponse]:
-    """To search for a record by a partial match in the last name."""
-    return paginate(db.query(Contact)
+    """To search for an entry by a partial match in all fields: name, last_name, query, phone."""
+    return paginate(
+                    db.query(Contact)
                     .filter(Contact.user_id == user.id)
-                    .filter(Contact.last_name.icontains(part_last_name)))
+                    .filter(
+                            or_(
+                                Contact.name.icontains(query_str), 
+                                Contact.last_name.icontains(query_str),
+                                Contact.email.icontains(query_str),
+                                cast(Contact.phone, String).icontains(str(query_str))
+                                )
+                            )
+                    )
 
 
-async def search_by_like_email(
-                               part_email: str,
-                               user: User,
-                               db: Session
-                               ) -> Page[ContactResponse]:
-    """To search for a record by a partial match in an email."""
-    return paginate(db.query(Contact)
-                    .filter(Contact.user_id == user.id)
-                    .filter(Contact.email.icontains(part_email)))
+# -like- AND-------------------------------------------------------
+async def search_by_like_fields_and(
+                                    part_name: str | None,
+                                    part_last_name: str | None,
+                                    part_email: str | None,
+                                    part_phone: int | None,
+                                    user: User,
+                                    db: Session
+                                    ) -> Page[ContactResponse]:
+    """To search for an entry by a partial match in all fields: name, last_name, query, phone."""
+    if not part_name and not part_last_name and not part_email and not part_phone:
+        return None
+
+    result = db.query(Contact).filter(Contact.user_id == user.id)
+    if part_name:
+        result = result.filter(Contact.name.icontains(part_name))
+    if part_last_name:
+        result = result.filter(Contact.last_name.icontains(part_last_name))
+    if part_email:
+        result = result.filter(Contact.email.icontains(part_email))
+    if part_phone:
+        result = result.filter(cast(Contact.phone, String).icontains(str(part_phone)))
+    
+    return paginate(result)
 
 
-async def search_by_like_phone(
-                               part_phone: int,
-                               user: User,
-                               db: Session
-                               ) -> Page[ContactResponse]:
-    """To search for a record by a partial match in phone."""
-    return paginate(db.query(Contact).filter(Contact.user_id == user.id)
-                    .filter(cast(Contact.phone, String)
-                            .icontains(str(part_phone))))
-
-
+# ------- search_by_birthday... --------------------------------------------
 async def search_by_birthday_celebration_within_days(
                                                      meantime: int,   
                                                      user: User,
@@ -216,7 +234,9 @@ async def search_by_birthday_celebration_within_days(
     days_limit = date.today() + timedelta(meantime)
     slide = 1 if days_limit.year - today.year else 0
 
-    return paginate(db.query(Contact)
+    return paginate(
+                    db.query(Contact)
                     .filter(Contact.user_id == user.id)
                     .filter(func.to_char(Contact.birthday, f'{slide}MM-DD') >= today.strftime(f"0%m-%d"),
-                            func.to_char(Contact.birthday, '0MM-DD') <= days_limit.strftime(f"{slide}%m-%d")))
+                            func.to_char(Contact.birthday, '0MM-DD') <= days_limit.strftime(f"{slide}%m-%d"))
+                    )
