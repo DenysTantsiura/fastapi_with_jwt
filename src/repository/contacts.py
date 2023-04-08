@@ -10,7 +10,7 @@ from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import Session
 
 from src.database.models import Contact, User
-from src.schemes import ContactModel, CatToNameModel, ContactResponse
+from src.schemes import ContactModel, CatToNameModel, ContactQuery, ContactResponse
 
 
 async def get_contacts(
@@ -108,8 +108,9 @@ async def change_name_contact(
     return contact
 
 
-# --AND----- (add OR ? )
+# --AND----- (add OR ? )-------------------------------------
 async def search_by_item(
+                        #  body: ContactQuery,
                          name: str | None,
                          last_name: str | None,
                          email: str | None,
@@ -118,10 +119,20 @@ async def search_by_item(
                          db: Session
                          ) -> Optional[Contact]:
     """To search for a record by a specific name."""
+    # body_data = jsonable_encoder(body)
+    # if not any(body_data.values()):
+
+    #     return None
+    
+    # result = db.query(Contact).filter(Contact.user_id == user.id)
+    # for field in body_data:
+    #     if body[field]:
+    #         result = result.filter_by(field=body[field])
+
     if not name and not last_name and not email and not phone:
 
         return None
-    
+
     result = db.query(Contact).filter(Contact.user_id == user.id)
     if name:
         result = result.filter_by(name=name)
@@ -134,45 +145,10 @@ async def search_by_item(
 
     return result.first()  # db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
 
-# ----------
-
-# async def search_by_name(
-#                          name: str,
-#                          user: User,
-#                          db: Session
-#                          ) -> Optional[Contact]:
-#     """To search for a record by a specific name."""
-#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
-
-
-# async def search_by_last_name(
-#                               last_name: str,
-#                               user: User,
-#                               db: Session
-#                               ) -> Optional[Contact]:
-#     """To search for a record by a specific last name."""
-#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(last_name=last_name).first() 
-
-
-# async def search_by_email(
-#                           email: str,
-#                           user: User,
-#                           db: Session
-#                           ) -> Optional[Contact]:
-#     """To search for a record by a certain email."""
-#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(email=email).first()
-
-
-# async def search_by_phone(
-#                           phone: int,
-#                           user: User,
-#                           db: Session
-#                           ) -> Optional[Contact]:
-#     """To search for a record by a certain phone."""
-#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(phone=phone).first()
-
 
 # ----------------------------------------------
+
+
 # https://stackoverflow.com/questions/7942547/using-or-in-sqlalchemy
 async def search_by_like(
                          query_str: str,
@@ -190,6 +166,20 @@ async def search_by_like(
 # ----------------------------------------------
 
 
+async def search_by_like_item(
+                              part_name: str,
+                              part_last_name: str,
+                              part_email: str,
+                              part_phone: int,
+                              user: User,
+                              db: Session
+                              ) -> Page[ContactResponse]:
+    """To search for an entry by a partial match in the name."""
+    return paginate(db.query(Contact)
+                    .filter(Contact.user_id == user.id)
+                    .filter(Contact.name.icontains(part_name)))
+
+# ------------=---------------=---------------
 async def search_by_like_name(
                               part_name: str,
                               user: User,
