@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from src.database.db_connect import get_db
 from src.database.models import Contact, User
 from src.repository import contacts as repository_contacts
-from src.schemes import ContactModel, ContactQuery, ContactResponse, CatToNameModel
+from src.schemes import ContactModel, ContactResponse, CatToNameModel
 from src.services.auth import auth_service
 
 
@@ -124,10 +124,10 @@ async def search_by_fields_and(
 
 @router.get("/search_by_fields_or/{query_str}", response_model=Page[ContactResponse], tags=['search'])
 async def search_by_fields_or(
-                         query_str: str,
-                         db: Session = Depends(get_db),
-                         current_user: User = Depends(auth_service.get_current_user)
-                         ) -> Page[ContactResponse]:
+                              query_str: str,
+                              db: Session = Depends(get_db),
+                              current_user: User = Depends(auth_service.get_current_user)
+                              ) -> Page[ContactResponse]:
     contact = await repository_contacts.search_by_fields_or(query_str, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")
@@ -137,10 +137,10 @@ async def search_by_fields_or(
 
 @router.get("/search_by_like_fields_or/{query_str}", response_model=Page[ContactResponse], tags=['search'])
 async def search_by_like_fields_or(
-                         query_str: str,
-                         db: Session = Depends(get_db),
-                         current_user: User = Depends(auth_service.get_current_user)
-                         ) -> Page[ContactResponse]:
+                                   query_str: str,
+                                   db: Session = Depends(get_db),
+                                   current_user: User = Depends(auth_service.get_current_user)
+                                   ) -> Page[ContactResponse]:
     contact = await repository_contacts.search_by_like_fields_or(query_str, current_user, db)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact Not Found")

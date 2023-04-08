@@ -11,6 +11,7 @@ class ContactModel(BaseModel):
     birthday: date  # = Field(default=date.today())  # YYYY-MM-DD
     description: str = Field(default='-', max_length=3000)  # String
 
+
 '''
 class ContactQuery(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=30)
@@ -20,6 +21,7 @@ class ContactQuery(BaseModel):
     # birthday: date  # = Field(default=date.today())  # YYYY-MM-DD
     # description: str = Field(default='-', max_length=3000)  # String
 '''
+
 
 class ContactResponse(ContactModel):
     id: int = 1 
