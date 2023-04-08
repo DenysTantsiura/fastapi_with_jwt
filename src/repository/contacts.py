@@ -108,40 +108,68 @@ async def change_name_contact(
     return contact
 
 
-async def search_by_name(
-                         name: str,
+# --AND----- (add OR ? )
+async def search_by_item(
+                         name: str | None,
+                         last_name: str | None,
+                         email: str | None,
+                         phone: int | None,
                          user: User,
                          db: Session
                          ) -> Optional[Contact]:
     """To search for a record by a specific name."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
+    if not name and not last_name and not email and not phone:
+
+        return None
+    
+    result = db.query(Contact).filter(Contact.user_id == user.id)
+    if name:
+        result = result.filter_by(name=name)
+    if last_name:
+        result = result.filter_by(last_name=last_name)
+    if email:
+        result = result.filter_by(email=email)
+    if phone:
+        result = result.filter_by(phone=phone)
+
+    return result.first()  # db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
+
+# ----------
+
+# async def search_by_name(
+#                          name: str,
+#                          user: User,
+#                          db: Session
+#                          ) -> Optional[Contact]:
+#     """To search for a record by a specific name."""
+#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(name=name).first()
 
 
-async def search_by_last_name(
-                              last_name: str,
-                              user: User,
-                              db: Session
-                              ) -> Optional[Contact]:
-    """To search for a record by a specific last name."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(last_name=last_name).first() 
+# async def search_by_last_name(
+#                               last_name: str,
+#                               user: User,
+#                               db: Session
+#                               ) -> Optional[Contact]:
+#     """To search for a record by a specific last name."""
+#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(last_name=last_name).first() 
 
 
-async def search_by_email(
-                          email: str,
-                          user: User,
-                          db: Session
-                          ) -> Optional[Contact]:
-    """To search for a record by a certain email."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(email=email).first()
+# async def search_by_email(
+#                           email: str,
+#                           user: User,
+#                           db: Session
+#                           ) -> Optional[Contact]:
+#     """To search for a record by a certain email."""
+#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(email=email).first()
 
 
-async def search_by_phone(
-                          phone: int,
-                          user: User,
-                          db: Session
-                          ) -> Optional[Contact]:
-    """To search for a record by a certain phone."""
-    return db.query(Contact).filter(Contact.user_id == user.id).filter_by(phone=phone).first()
+# async def search_by_phone(
+#                           phone: int,
+#                           user: User,
+#                           db: Session
+#                           ) -> Optional[Contact]:
+#     """To search for a record by a certain phone."""
+#     return db.query(Contact).filter(Contact.user_id == user.id).filter_by(phone=phone).first()
 
 
 # ----------------------------------------------
